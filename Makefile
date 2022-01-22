@@ -1,40 +1,35 @@
 SHELL := /bin/bash
 
-.PHONY: default clean linux-env mac-env windows-env publish
+.PHONY: default clean clean-linux clean-mac clean-windows linux-env mac-env windows-env linux-container mac-container windows-container publish
 
 default: dist/darwin/openvpn dist/linux/openvpn dist/windows/openvpn.exe
-	@true
 
 clean: clean-linux clean-mac clean-windows
-	@true
 
 linux-env:
-	if [[ ! $$(docker images nanobox/build-openvpn-linux) =~ "nanobox/build-openvpn-linux" ]]; then \
-		docker build --no-cache -t nanobox/build-openvpn-linux -f linux/Dockerfile linux; \
+	if [[ ! $$(docker images mubox/build-openvpn-linux) =~ "mubox/build-openvpn-linux" ]]; then \
+		docker build --no-cache -t mubox/build-openvpn-linux -f linux/Dockerfile linux; \
 	fi
 
-mac-env: mac/MacOSX10.11.sdk.tar.bz2
-	if [[ ! $$(docker images nanobox/build-openvpn-mac) =~ "nanobox/build-openvpn-mac" ]]; then \
-		docker build --no-cache -t nanobox/build-openvpn-mac -f mac/Dockerfile mac; \
+mac-env: mac/MacOSX10.11.sdk.tar.xz
+	if [[ ! $$(docker images mubox/build-openvpn-mac) =~ "mubox/build-openvpn-mac" ]]; then \
+		docker build --no-cache -t mubox/build-openvpn-mac -f mac/Dockerfile mac; \
 	fi
 
 windows-env: windows/codesign.p12
-	if [[ ! $$(docker images nanobox/build-openvpn-windows) =~ "nanobox/build-openvpn-windows" ]]; then \
-		docker build --no-cache -t nanobox/build-openvpn-windows -f windows/Dockerfile windows; \
+	if [[ ! $$(docker images mubox/build-openvpn-windows) =~ "mubox/build-openvpn-windows" ]]; then \
+		docker build --no-cache -t mubox/build-openvpn-windows -f windows/Dockerfile windows; \
 	fi
 
 windows/codesign.p12: certs
 	openssl pkcs12 -export -nodes -out windows/codesign.p12 -inkey certs/win/codesign.key -in certs/win/codesign.crt -passout pass:
 
-mac/MacOSX10.11.sdk.tar.bz2:
-	aws s3 cp \
-		s3://private.nanobox.io/sdk/MacOSX10.11.sdk.tar.bz2 \
-		mac/MacOSX10.11.sdk.tar.bz2 \
-		--region us-west-2
+mac/MacOSX10.11.sdk.tar.xz:
+	curl -sSL https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.11.sdk.tar.xz -o mac/MacOSX10.11.sdk.tar.xz
 
 linux-container: linux-env
 	if [[ ! $$(docker ps -a) =~ "build-linux" ]]; then \
-		docker run -d --name build-linux nanobox/build-openvpn-linux sleep 365d; \
+		docker run -d --name build-linux mubox/build-openvpn-linux sleep 365d; \
 	else \
 		if [[ ! $$(docker ps) =~ "build-linux" ]]; then \
 			docker start build-linux; \
@@ -43,7 +38,7 @@ linux-container: linux-env
 
 mac-container: mac-env
 	if [[ ! $$(docker ps -a) =~ "build-mac" ]]; then \
-		docker run -d --name build-mac nanobox/build-openvpn-mac sleep 365d; \
+		docker run -d --name build-mac mubox/build-openvpn-mac sleep 365d; \
 	else \
 		if [[ ! $$(docker ps) =~ "build-mac" ]]; then \
 			docker start build-mac; \
@@ -52,7 +47,7 @@ mac-container: mac-env
 
 windows-container: windows-env
 	if [[ ! $$(docker ps -a) =~ "build-windows" ]]; then \
-		docker run -d --name build-windows nanobox/build-openvpn-windows sleep 365d; \
+		docker run -d --name build-windows mubox/build-openvpn-windows sleep 365d; \
 	else \
 		if [[ ! $$(docker ps) =~ "build-windows" ]]; then \
 			docker start build-windows; \
@@ -62,17 +57,17 @@ windows-container: windows-env
 dist/darwin/openvpn: mac-container
 	mkdir -p dist/darwin
 	docker exec -it build-mac /root/build.sh
-	docker cp build-mac:/root/src/openvpn-2.3.14/src/openvpn/openvpn dist/darwin/openvpn
+	docker cp build-mac:/root/src/openvpn-2.5.5/src/openvpn/openvpn dist/darwin/openvpn
 
 dist/linux/openvpn: linux-container
 	mkdir -p dist/linux
 	docker exec -it build-linux /root/build.sh
-	docker cp build-linux:/root/src/openvpn-2.3.14/src/openvpn/openvpn dist/linux/openvpn
+	docker cp build-linux:/root/src/openvpn-2.5.5/src/openvpn/openvpn dist/linux/openvpn
 
 dist/windows/openvpn.exe: windows-container
 	mkdir -p dist/windows
 	docker exec -it build-windows /root/build.sh
-	docker cp build-windows:/root/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.3.14/src/openvpn/.libs/openvpn.exe dist/windows/openvpn.exe
+	docker cp build-windows:/root/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.5.5/src/openvpn/.libs/openvpn.exe dist/windows/openvpn.exe
 
 clean-linux:
 	if [[ $$(docker ps) =~ "build-linux" ]]; then \
@@ -101,13 +96,13 @@ clean-windows:
 certs:
 	mkdir -p certs
 	aws s3 sync \
-		s3://private.nanobox.io/certs \
+		s3://private.microbox.cloud/certs \
 		certs/ \
 		--region us-west-2
 
 publish:
 	aws s3 sync \
 		dist/ \
-		s3://tools.nanobox.io/openvpn \
+		s3://tools.microbox.cloud/openvpn \
 		--grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers \
 		--region us-east-1

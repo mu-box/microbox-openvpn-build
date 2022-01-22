@@ -7,9 +7,10 @@ cd ~/src
 git clone https://github.com/OpenVPN/openvpn-build.git
 cp ~/build.vars ~/src/openvpn-build/generic/build.vars
 cd openvpn-build/windows-nsis
-./build-complete --sign --sign-pkcs12=/root/codesign.p12 --sign-timestamp="http://timestamp.verisign.com/scripts/timstamp.dll"
+set -e
+./build-complete --sign --sign-pkcs12=/root/codesign.p12 --sign-timestamp="http://timestamp.digicert.com/"
 
-cd ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.3.14/src/openvpn/
+cd ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.5.5/src/openvpn/
 x86_64-w64-mingw32-gcc \
   -I/root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/include \
   -municode \
@@ -17,13 +18,19 @@ x86_64-w64-mingw32-gcc \
   -std=gnu89 \
   -o \
   .libs/openvpn.exe \
+  argv.o \
+  auth_token.o \
   base64.o \
   buffer.o \
   clinat.o \
+  comp.o \
+  compstub.o \
+  comp-lz4.o \
   crypto.o \
   crypto_openssl.o \
-  crypto_polarssl.o \
+  crypto_mbedtls.o \
   dhcp.o \
+  env_set.o \
   error.o \
   event.o \
   fdmisc.o \
@@ -42,6 +49,8 @@ x86_64-w64-mingw32-gcc \
   misc.o \
   platform.o \
   console.o \
+  console_builtin.o \
+  console_systemd.o \
   mroute.o \
   mss.o \
   mstats.o \
@@ -49,11 +58,13 @@ x86_64-w64-mingw32-gcc \
   mtu.o \
   mudp.o \
   multi.o \
+  networking_iproute2.o \
+  networking_sitnl.o \
   ntlm.o \
   occ.o \
   pkcs11.o \
   pkcs11_openssl.o \
-  pkcs11_polarssl.o \
+  pkcs11_mbedtls.o \
   openvpn.o \
   options.o \
   otime.o \
@@ -69,6 +80,7 @@ x86_64-w64-mingw32-gcc \
   push.o \
   reliable.o \
   route.o \
+  run_command.o \
   schedule.o \
   session_id.o \
   shaper.o \
@@ -77,17 +89,22 @@ x86_64-w64-mingw32-gcc \
   socks.o \
   ssl.o \
   ssl_openssl.o \
-  ssl_polarssl.o \
+  ssl_mbedtls.o \
+  ssl_ncp.o \
   ssl_verify.o \
   ssl_verify_openssl.o \
-  ssl_verify_polarssl.o \
+  ssl_verify_mbedtls.o \
   status.o \
+  tls_crypt.o \
   tun.o \
+  vlan.o \
   win32.o \
   cryptoapi.o \
   openvpn_win32_resources.o \
+  block_dns.o \
   ../../src/compat/.libs/libcompat.a \
   -L/root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/lib \
+  /root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/lib/liblz4.a \
   /root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/lib/liblzo2.a \
   /root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/lib/libpkcs11-helper.a \
   /root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/lib/libssl.a \
@@ -97,9 +114,12 @@ x86_64-w64-mingw32-gcc \
   -lwininet \
   -lcrypt32 \
   -liphlpapi \
-  -lrpcrt4 \
   -lwinmm \
+  -lfwpuclnt \
+  -lrpcrt4 \
+  -lncrypt \
+  -lsetupapi \
   -L/root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/lib
 
 
-# ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.3.14/src/openvpn/.libs/openvpn.exe
+# ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.5.5/src/openvpn/.libs/openvpn.exe

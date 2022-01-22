@@ -1,9 +1,11 @@
 FROM ubuntu
 
+ENV DEBIAN_FRONTEND noninteractive
+
 # install some things
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y git autoconf libtool wget gawk mingw-w64 bzip2 zip make man2html tofrodos nsis osslsigncode
+    apt-get install -y git autoconf libtool wget gawk mingw-w64 bzip2 zip make man2html docutils-common tofrodos nsis osslsigncode
 
 RUN ln -s fromdos /usr/bin/unix2dos && ln -s fromdos /usr/bin/dos2unix
 
