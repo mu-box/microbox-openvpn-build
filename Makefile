@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .PHONY: default clean clean-linux clean-mac clean-windows linux-env mac-env windows-env linux-container mac-container windows-container publish
 
-default: dist/darwin/openvpn dist/linux/openvpn dist/windows/openvpn.exe
+default: dist/darwin/amd64/openvpn dist/darwin/arm64/openvpn dist/linux/amd64/openvpn dist/linux/arm/openvpn dist/linux/arm64/openvpn dist/linux/s390x/openvpn dist/windows/amd64/openvpn.exe
 
 clean: clean-linux clean-mac clean-windows
 
@@ -11,7 +11,7 @@ linux-env:
 		docker build --no-cache -t mubox/build-openvpn-linux -f linux/Dockerfile linux; \
 	fi
 
-mac-env: mac/MacOSX10.11.sdk.tar.xz
+mac-env: mac/MacOSX10.11.sdk.tar.xz mac/MacOSX11.1.sdk.tar.xz
 	if [[ ! $$(docker images mubox/build-openvpn-mac) =~ "mubox/build-openvpn-mac" ]]; then \
 		docker build --no-cache -t mubox/build-openvpn-mac -f mac/Dockerfile mac; \
 	fi
@@ -25,7 +25,10 @@ windows/codesign.p12: certs
 	openssl pkcs12 -export -nodes -out windows/codesign.p12 -inkey certs/win/codesign.key -in certs/win/codesign.crt -passout pass:
 
 mac/MacOSX10.11.sdk.tar.xz:
-	curl -sSL https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.11.sdk.tar.xz -o mac/MacOSX10.11.sdk.tar.xz
+	curl -fsSL https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.11.sdk.tar.xz -o mac/MacOSX10.11.sdk.tar.xz
+
+mac/MacOSX11.1.sdk.tar.xz:
+	curl -fsSL https://github.com/joseluisq/MacOSX-SDKs/releases/download/11.1/MacOSX11.1.sdk.tar.xz -o mac/MacOSX11.1.sdk.tar.xz
 
 linux-container: linux-env
 	if [[ ! $$(docker ps -a) =~ "build-linux" ]]; then \
@@ -54,20 +57,42 @@ windows-container: windows-env
 		fi \
 	fi
 
-dist/darwin/openvpn: mac-container
-	mkdir -p dist/darwin
-	docker exec -it build-mac /root/build.sh
-	docker cp build-mac:/root/src/openvpn-2.5.5/src/openvpn/openvpn dist/darwin/openvpn
-
-dist/linux/openvpn: linux-container
-	mkdir -p dist/linux
+linux-build: linux-container
 	docker exec -it build-linux /root/build.sh
-	docker cp build-linux:/root/src/openvpn-2.5.5/src/openvpn/openvpn dist/linux/openvpn
 
-dist/windows/openvpn.exe: windows-container
-	mkdir -p dist/windows
+mac-build: mac-container
+	docker exec -it build-mac /root/build.sh
+
+windows-build: windows-container
 	docker exec -it build-windows /root/build.sh
-	docker cp build-windows:/root/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.5.5/src/openvpn/.libs/openvpn.exe dist/windows/openvpn.exe
+
+dist/darwin/amd64/openvpn: mac-build
+	mkdir -p dist/darwin/amd64
+	docker cp build-mac:/root/build/amd64/sbin/openvpn dist/darwin/amd64/openvpn
+
+dist/darwin/arm64/openvpn: mac-build
+	mkdir -p dist/darwin/arm64
+	docker cp build-mac:/root/build/arm64/sbin/openvpn dist/darwin/arm64/openvpn
+
+dist/linux/amd64/openvpn: linux-build
+	mkdir -p dist/linux/amd64
+	docker cp build-linux:/root/build/amd64/sbin/openvpn dist/linux/amd64/openvpn
+
+dist/linux/arm/openvpn: linux-build
+	mkdir -p dist/linux/arm
+	docker cp build-linux:/root/build/arm/sbin/openvpn dist/linux/arm/openvpn
+
+dist/linux/arm64/openvpn: linux-build
+	mkdir -p dist/linux/arm64
+	docker cp build-linux:/root/build/arm64/sbin/openvpn dist/linux/arm64/openvpn
+
+dist/linux/s390x/openvpn: linux-build
+	mkdir -p dist/linux/s390x
+	docker cp build-linux:/root/build/s390x/sbin/openvpn dist/linux/s390x/openvpn
+
+dist/windows/amd64/openvpn.exe: windows-build
+	mkdir -p dist/windows/amd64
+	docker cp build-windows:/root/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.5.5/src/openvpn/.libs/openvpn.exe dist/windows/amd64/openvpn.exe
 
 clean-linux:
 	if [[ $$(docker ps) =~ "build-linux" ]]; then \
