@@ -1,4 +1,5 @@
 SHELL := /bin/bash
+interactive := $(shell test -t 0 && echo yes)
 
 .PHONY: default clean clean-linux clean-mac clean-windows linux-env mac-env windows-env linux-container mac-container windows-container publish
 
@@ -8,17 +9,23 @@ clean: clean-linux clean-mac clean-windows
 
 linux-env:
 	if [[ ! $$(docker images mubox/build-openvpn-linux) =~ "mubox/build-openvpn-linux" ]]; then \
+		echo '::group::Build Linux Environment'; \
 		docker build --no-cache -t mubox/build-openvpn-linux -f linux/Dockerfile linux; \
+		echo '::end-group::'; \
 	fi
 
 mac-env: mac/MacOSX10.11.sdk.tar.xz mac/MacOSX11.1.sdk.tar.xz
 	if [[ ! $$(docker images mubox/build-openvpn-mac) =~ "mubox/build-openvpn-mac" ]]; then \
+		echo '::group::Build Mac Environment'; \
 		docker build --no-cache -t mubox/build-openvpn-mac -f mac/Dockerfile mac; \
+		echo '::end-group::'; \
 	fi
 
 windows-env: windows/codesign.p12
 	if [[ ! $$(docker images mubox/build-openvpn-windows) =~ "mubox/build-openvpn-windows" ]]; then \
+		echo '::group::Build Windows Environment'; \
 		docker build --no-cache -t mubox/build-openvpn-windows -f windows/Dockerfile windows; \
+		echo '::end-group::'; \
 	fi
 
 windows/codesign.p12: certs
@@ -33,38 +40,38 @@ mac/MacOSX11.1.sdk.tar.xz:
 linux-container: linux-env
 	if [[ ! $$(docker ps -a) =~ "build-linux" ]]; then \
 		docker run -d --name build-linux mubox/build-openvpn-linux sleep 365d; \
-	else \
-		if [[ ! $$(docker ps) =~ "build-linux" ]]; then \
-			docker start build-linux; \
-		fi \
+	elif [[ ! $$(docker ps) =~ "build-linux" ]]; then \
+		docker start build-linux; \
 	fi
 
 mac-container: mac-env
 	if [[ ! $$(docker ps -a) =~ "build-mac" ]]; then \
 		docker run -d --name build-mac mubox/build-openvpn-mac sleep 365d; \
-	else \
-		if [[ ! $$(docker ps) =~ "build-mac" ]]; then \
-			docker start build-mac; \
-		fi \
+	elif [[ ! $$(docker ps) =~ "build-mac" ]]; then \
+		docker start build-mac; \
 	fi
 
 windows-container: windows-env
 	if [[ ! $$(docker ps -a) =~ "build-windows" ]]; then \
 		docker run -d --name build-windows mubox/build-openvpn-windows sleep 365d; \
-	else \
-		if [[ ! $$(docker ps) =~ "build-windows" ]]; then \
-			docker start build-windows; \
-		fi \
+	elif [[ ! $$(docker ps) =~ "build-windows" ]]; then \
+		docker start build-windows; \
 	fi
 
 linux-build: linux-container
-	docker exec -it build-linux /root/build.sh
+	echo '::group::Building OpenVPN for Linux'
+	docker exec ${interactive:+-i} -t build-linux /root/build.sh
+	echo '::end-group::'
 
 mac-build: mac-container
-	docker exec -it build-mac /root/build.sh
+	echo '::group::Building OpenVPN for macOS'
+	docker exec ${interactive:+-i} -t build-mac /root/build.sh
+	echo '::end-group::'
 
 windows-build: windows-container
-	docker exec -it build-windows /root/build.sh
+	echo '::group::Building OpenVPN for Windows'
+	docker exec ${interactive:+-i} -t build-windows /root/build.sh
+	echo '::end-group::'
 
 dist/darwin/amd64/openvpn: mac-build
 	mkdir -p dist/darwin/amd64
