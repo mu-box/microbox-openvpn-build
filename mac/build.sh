@@ -19,9 +19,9 @@ cd ~
 mkdir -p build/{amd64,arm64}
 
 cd ~/src
-wget https://www.openssl.org/source/openssl-1.1.1m.tar.gz
-tar -xzf openssl-1.1.1m.tar.gz
-cd openssl-1.1.1m
+wget https://www.openssl.org/source/openssl-${:OPENSSL_VERSION-1.1.1m}.tar.gz
+tar -xzf openssl-*.tar.gz
+cd openssl-*/
 ./Configure no-dso no-asm --prefix=/root/build/amd64 darwin64-x86_64-cc
 make -j 8 CC=x86_64-apple-darwin15-gcc AR=x86_64-apple-darwin15-ar RANLIB=x86_64-apple-darwin15-ranlib
 x86_64-apple-darwin15-ranlib libssl.a
@@ -35,9 +35,9 @@ aarch64-apple-darwin20.2-ranlib libcrypto.a
 make install CC=aarch64-apple-darwin20.2-cc AR=aarch64-apple-darwin20.2-ar RANLIB=aarch64-apple-darwin20.2-ranlib
 
 cd ~/src
-wget http://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
-tar -xzf lzo-2.10.tar.gz
-cd lzo-2.10
+wget https://www.oberhumer.com/opensource/lzo/download/lzo-${LZO_VERSION:-2.10}.tar.gz
+tar -xzf lzo-*.tar.gz
+cd lzo-*/
 CC=x86_64-apple-darwin15-gcc AR=x86_64-apple-darwin15-ar RANLIB=x86_64-apple-darwin15-ranlib ./configure --host=x86_64-apple-darwin15 --prefix=/root/build/amd64 CFLAGS="-fPIC -O3"
 make -j 8
 make install
@@ -47,9 +47,9 @@ make -j 8
 make install
 
 cd ~/src
-wget https://swupdate.openvpn.org/community/releases/openvpn-2.5.5.tar.gz
-tar -xzf openvpn-2.5.5.tar.gz
-cd openvpn-2.5.5
+wget https://swupdate.openvpn.org/community/releases/openvpn-${OPENVPN_VERSION:-2.5.5}.tar.gz
+tar -xzf openvpn-*.tar.gz
+cd openvpn-*/
 CC=x86_64-apple-darwin15-cc AR=x86_64-apple-darwin15-ar RANLIB=x86_64-apple-darwin15-ranlib ./configure --host=x86_64-apple-darwin15 --enable-shared=no --disable-plugins --disable-plugin-down-root --prefix=/root/build/amd64 --disable-plugin-auth-pam CPPFLAGS='-I/root/build/amd64/include -I/root/build/amd64/include/openssl -I/root/src/osxcross/target/SDK/MacOSX10.11.sdk/usr/include -D__APPLE_USE_RFC_3542' LDFLAGS='-L/root/build/amd64/lib'
 make -j 8
 make install

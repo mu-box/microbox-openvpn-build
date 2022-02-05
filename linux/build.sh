@@ -5,11 +5,11 @@ mkdir build
 mkdir src
 
 cd ~/src
-wget https://ftp.gnu.org/gnu/glibc/glibc-2.33.tar.gz
-wget https://github.com/thkukuk/libnsl/releases/download/v2.0.0/libnsl-2.0.0.tar.xz
-wget https://www.openssl.org/source/openssl-1.1.1m.tar.gz
-wget https://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
-wget https://swupdate.openvpn.org/community/releases/openvpn-2.5.5.tar.gz
+wget https://ftp.gnu.org/gnu/glibc/glibc-${GLIBC_VERSION:-2.33}.tar.gz
+wget https://github.com/thkukuk/libnsl/releases/download/v${LIBNSL_VERSION:-2.0.0}/libnsl-${LIBNSL_VERSION:-2.0.0}.tar.xz
+wget https://www.openssl.org/source/openssl-${OPENSSL_VERSION:-1.1.1m}.tar.gz
+wget https://www.oberhumer.com/opensource/lzo/download/lzo-${LZO_VERSION:-2.10}.tar.gz
+wget https://swupdate.openvpn.org/community/releases/openvpn-${OPENVPN_VERSION:-2.5.5}.tar.gz
 
 echo 'amd64 x86_64-pc-linux-gnu x86_64-linux-gnu linux-x86_64
 arm64 aarch64-unknown-linux-gnu aarch64-linux-gnu linux-aarch64

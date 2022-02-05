@@ -10,7 +10,7 @@ cd openvpn-build/windows-nsis
 set -e
 ./build-complete --sign --sign-pkcs12=/root/codesign.p12 --sign-timestamp="http://timestamp.digicert.com/"
 
-cd ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.5.5/src/openvpn/
+cd ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-*/src/openvpn/
 x86_64-w64-mingw32-gcc \
   -I/root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/include \
   -municode \
@@ -122,4 +122,4 @@ x86_64-w64-mingw32-gcc \
   -L/root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/lib
 
 
-# ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-2.5.5/src/openvpn/.libs/openvpn.exe
+# ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-*/src/openvpn/.libs/openvpn.exe
