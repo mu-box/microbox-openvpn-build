@@ -3,3 +3,5 @@ certs/
 dist/
 windows/codesign.p12
 mac/MacOSX*.sdk.*
+.secrets
+.env

@@ -3,13 +3,19 @@
 cd ~
 mkdir src
 
+echo '::group::Setup OpenVPN Build System for Windows'
 cd ~/src
 git clone https://github.com/OpenVPN/openvpn-build.git
 cp ~/build.vars ~/src/openvpn-build/generic/build.vars
 cd openvpn-build/windows-nsis
+echo '::endgroup::'
+
+echo '::group::Build OpenVPN (and Deps) for Windows (amd64)'
 set -e
 ./build-complete --sign --sign-pkcs12=/root/codesign.p12 --sign-timestamp="http://timestamp.digicert.com/"
+echo '::endgroup::'
 
+echo '::group::Rebuild OpenVPN for Windows (amd64) Statically'
 cd ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-*/src/openvpn/
 x86_64-w64-mingw32-gcc \
   -I/root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/include \
@@ -120,6 +126,7 @@ x86_64-w64-mingw32-gcc \
   -lncrypt \
   -lsetupapi \
   -L/root/src/openvpn-build/windows-nsis/tmp/image-x86_64/openvpn/lib
+echo '::endgroup::'
 
 
 # ~/src/openvpn-build/windows-nsis/tmp/build-x86_64/openvpn-*/src/openvpn/.libs/openvpn.exe

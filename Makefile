@@ -3,7 +3,7 @@ interactive := $(shell test -t 0 && echo yes)
 
 .PHONY: default clean clean-linux clean-mac clean-windows linux-env mac-env windows-env linux-container mac-container windows-container publish
 
-default: dist/darwin/amd64/openvpn dist/darwin/arm64/openvpn dist/linux/amd64/openvpn dist/linux/arm/openvpn dist/linux/arm64/openvpn dist/linux/s390x/openvpn dist/windows/amd64/openvpn.exe
+default: dist/windows/amd64/openvpn.exe dist/darwin/amd64/openvpn dist/darwin/arm64/openvpn dist/linux/amd64/openvpn dist/linux/arm/openvpn dist/linux/arm64/openvpn dist/linux/s390x/openvpn
 
 clean: clean-linux clean-mac clean-windows
 
@@ -11,21 +11,21 @@ linux-env:
 	if [[ ! $$(docker images mubox/build-openvpn-linux) =~ "mubox/build-openvpn-linux" ]]; then \
 		echo '::group::Build Linux Environment'; \
 		docker build --no-cache -t mubox/build-openvpn-linux -f linux/Dockerfile linux; \
-		echo '::end-group::'; \
+		echo '::endgroup::'; \
 	fi
 
 mac-env: mac/MacOSX10.11.sdk.tar.xz mac/MacOSX11.1.sdk.tar.xz
 	if [[ ! $$(docker images mubox/build-openvpn-mac) =~ "mubox/build-openvpn-mac" ]]; then \
 		echo '::group::Build Mac Environment'; \
 		docker build --no-cache -t mubox/build-openvpn-mac -f mac/Dockerfile mac; \
-		echo '::end-group::'; \
+		echo '::endgroup::'; \
 	fi
 
 windows-env: windows/codesign.p12
 	if [[ ! $$(docker images mubox/build-openvpn-windows) =~ "mubox/build-openvpn-windows" ]]; then \
 		echo '::group::Build Windows Environment'; \
 		docker build --no-cache -t mubox/build-openvpn-windows -f windows/Dockerfile windows; \
-		echo '::end-group::'; \
+		echo '::endgroup::'; \
 	fi
 
 windows/codesign.p12: certs
@@ -59,19 +59,13 @@ windows-container: windows-env
 	fi
 
 linux-build: linux-container
-	echo '::group::Building OpenVPN for Linux'
 	docker exec ${interactive:+-i} -t build-linux /root/build.sh
-	echo '::end-group::'
 
 mac-build: mac-container
-	echo '::group::Building OpenVPN for macOS'
 	docker exec ${interactive:+-i} -t build-mac /root/build.sh
-	echo '::end-group::'
 
 windows-build: windows-container
-	echo '::group::Building OpenVPN for Windows'
 	docker exec ${interactive:+-i} -t build-windows /root/build.sh
-	echo '::end-group::'
 
 dist/darwin/amd64/openvpn: mac-build
 	mkdir -p dist/darwin/amd64

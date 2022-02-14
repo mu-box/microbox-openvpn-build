@@ -11,24 +11,50 @@ on:
 
 jobs:
   build:
-    name: Build/Publish OpenVPN Binaries
+    name: Build and Publish OpenVPN Binaries
     runs-on: ubuntu-latest
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     permissions:
       id-token: write
       contents: read
     steps:
+      - name: (LOCAL ONLY) Install AWS CLI
+        if: github.actor == 'nektos/act'
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+          make clean
       - name: Checkout
         uses: actions/checkout@v2
+      - name: (LOCAL) Configure AWS credentials for certs
+        if: github.event_name != 'pull_request' && github.actor == 'nektos/act'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/s3-read
+          role-duration-seconds: 1200
+          aws-region: us-east-1
       - name: Configure AWS credentials for certs
+        if: github.actor != 'nektos/act'
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/s3-read
           aws-region: us-west-2
       - name: Build binaries
         run: make
+      - name: (LOCAL) Configure AWS credentials for publication
+        if: github.event_name != 'pull_request' && github.actor == 'nektos/act'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/s3-write
+          role-duration-seconds: 1200
+          aws-region: us-east-1
       - name: Configure AWS credentials for publication
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.actor != 'nektos/act'
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/s3-write
