@@ -52,7 +52,7 @@ arm armv7-unknown-linux-gnu arm-linux-gnueabihf linux-armv4' | \
         cd openssl-*/
         ./Configure --prefix=/root/build/${arch} no-dso no-asm no-shared -fPIC ${ossl}
         make -j 8 CC="${fsname}-gcc" CXX="${fsname}-g++" AR="${fsname}-ar" RANLIB="${fsname}-ranlib" OBJCOPY="${fsname}-objcopy" OBJDUMP="${fsname}-objdump"
-        make install
+        make -j 8 install_sw
         cd ~/src/
         rm -r openssl-*/
         echo '::endgroup::'

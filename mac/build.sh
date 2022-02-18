@@ -48,7 +48,7 @@ if [[ ${TARGET} == "amd64" || ${TARGET} == "all" ]]; then
     make -j 8 CC=x86_64-apple-darwin15-gcc AR=x86_64-apple-darwin15-ar RANLIB=x86_64-apple-darwin15-ranlib
     x86_64-apple-darwin15-ranlib libssl.a
     x86_64-apple-darwin15-ranlib libcrypto.a
-    make install CC=x86_64-apple-darwin15-gcc AR=x86_64-apple-darwin15-ar RANLIB=x86_64-apple-darwin15-ranlib
+    make -j 8 install_sw CC=x86_64-apple-darwin15-gcc AR=x86_64-apple-darwin15-ar RANLIB=x86_64-apple-darwin15-ranlib
     echo '::endgroup::'
 fi
 
@@ -62,7 +62,7 @@ if [[ ${TARGET} == "arm64" || ${TARGET} == "all" ]]; then
     make -j 8 CC=aarch64-apple-darwin20.2-cc AR=aarch64-apple-darwin20.2-ar RANLIB=aarch64-apple-darwin20.2-ranlib
     aarch64-apple-darwin20.2-ranlib libssl.a
     aarch64-apple-darwin20.2-ranlib libcrypto.a
-    make install CC=aarch64-apple-darwin20.2-cc AR=aarch64-apple-darwin20.2-ar RANLIB=aarch64-apple-darwin20.2-ranlib
+    make -j 8 install_sw CC=aarch64-apple-darwin20.2-cc AR=aarch64-apple-darwin20.2-ar RANLIB=aarch64-apple-darwin20.2-ranlib
     echo '::endgroup::'
 fi
 
