@@ -18,7 +18,11 @@ arm64 aarch64-unknown-linux-gnu aarch64-linux-gnu linux-aarch64
 s390x s390x-ibm-linux-gnu s390x-linux-gnu linux64-s390x
 arm armv7-unknown-linux-gnu arm-linux-gnueabihf linux-armv4' | \
     while read arch target fsname ossl; do
-        echo '::group::Build Linux (${arch}) Deps: glibc'
+        if [[ -n ${TARGET} && ${TARGET} != ${arch} ]]; then
+            continue
+        fi
+
+        echo "::group::Build Linux (${arch}) Deps: glibc"
         tar -xzf glibc-*.tar.gz
         cd glibc-*/
         patch -u -p 1 -i ~/glibc-arm32-static-mode.patch
@@ -32,7 +36,7 @@ arm armv7-unknown-linux-gnu arm-linux-gnueabihf linux-armv4' | \
         rm -r glibc-*/
         echo '::endgroup::'
 
-        echo '::group::Build Linux (${arch}) Deps: libnsl'
+        echo "::group::Build Linux (${arch}) Deps: libnsl"
         tar -xJf libnsl-*.tar.xz
         cd libnsl-*/
         ./configure --prefix=/root/build/${arch} --host=${target} --target=${target} CFLAGS="-fPIC -static -O3" \
@@ -43,7 +47,7 @@ arm armv7-unknown-linux-gnu arm-linux-gnueabihf linux-armv4' | \
         rm -r libnsl-*/
         echo '::endgroup::'
 
-        echo '::group::Build Linux (${arch}) Deps: OpenSSL'
+        echo "::group::Build Linux (${arch}) Deps: OpenSSL"
         tar -xzf openssl-*.tar.gz
         cd openssl-*/
         ./Configure --prefix=/root/build/${arch} no-dso no-asm no-shared -fPIC ${ossl}
@@ -53,7 +57,7 @@ arm armv7-unknown-linux-gnu arm-linux-gnueabihf linux-armv4' | \
         rm -r openssl-*/
         echo '::endgroup::'
 
-        echo '::group::Build Linux (${arch}) Deps: LZO'
+        echo "::group::Build Linux (${arch}) Deps: LZO"
         tar -xzf lzo-*.tar.gz
         cd lzo-*/
         ./configure --prefix=/root/build/${arch} --host=${target} --target=${target} --enable-static --disable-debug CFLAGS="-fPIC -static -O3" \
@@ -64,7 +68,7 @@ arm armv7-unknown-linux-gnu arm-linux-gnueabihf linux-armv4' | \
         rm -r lzo-*/
         echo '::endgroup::'
 
-        echo '::group::Build OpenVPN for Linux (${arch})'
+        echo "::group::Build OpenVPN for Linux (${arch})"
         tar -xzf openvpn-*.tar.gz
         cd openvpn-*/
         ./configure --prefix=/root/build/${arch} --host=${target} --target=${target} --enable-static --disable-shared --enable-iproute2 --disable-plugins \

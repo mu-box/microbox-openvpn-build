@@ -11,41 +11,50 @@ on:
 
 jobs:
   build:
-    name: Build and Publish OpenVPN Binaries
+    name: Build and Publish OpenVPN Binaries for ${{ matrix.target }}
     runs-on: ubuntu-latest
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     permissions:
       id-token: write
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - windows
+          - mac-amd64
+          - mac-arm64
+          - linux-amd64
+          - linux-arm64
+          - linux-arm
+          - linux-s390x
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+        # the default image for act doesn't include this tool, but the actual GHA environment does...
       - name: (LOCAL ONLY) Install AWS CLI
         if: github.actor == 'nektos/act'
         run: |
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
+          unzip -q awscliv2.zip
           sudo ./aws/install
-          make clean
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: (LOCAL) Configure AWS credentials for certs
-        if: github.event_name != 'pull_request' && github.actor == 'nektos/act'
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/s3-read
-          role-duration-seconds: 1200
-          aws-region: us-east-1
+          make clean-${{ matrix.target }}
+
       - name: Configure AWS credentials for certs
-        if: github.actor != 'nektos/act'
         uses: aws-actions/configure-aws-credentials@v1
         with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/s3-read
+          role-duration-seconds: 1200
           aws-region: us-west-2
+
       - name: Build binaries
-        run: make
-      - name: (LOCAL) Configure AWS credentials for publication
-        if: github.event_name != 'pull_request' && github.actor == 'nektos/act'
+        run: make copy-${{ matrix.target }}
+
+      - name: Configure AWS credentials for publication
+        if: github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -53,12 +62,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/s3-write
           role-duration-seconds: 1200
           aws-region: us-east-1
-      - name: Configure AWS credentials for publication
-        if: github.event_name != 'pull_request' && github.actor != 'nektos/act'
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/s3-write
-          aws-region: us-east-1
+
       - name: Publish binaries
         if: github.event_name != 'pull_request'
-        run: make publish
+        run: make publish-${{ matrix.target }}
